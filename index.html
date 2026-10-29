@@ -59,7 +59,7 @@ F.forEach(function(f){box(f[0],f[1],f[2],f[3],f[4],0,f[5],G)});
 // base plate
 var gnd=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0xdfe3e8}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-.1;gnd.receiveShadow=true;sc.add(gnd);
 // orbit
-var tg=new THREE.Vector3(X(590),0.5,Z(555)),th=.8,ph=1.0,rd=17,auto=false,cut=false;
+var tg=new THREE.Vector3(X(590),0.5,Z(555)),th=.8,ph=1.0,rd=17,auto=false,cut=true;
 function upd(){cam.position.set(tg.x+rd*Math.sin(ph)*Math.sin(th),tg.y+rd*Math.cos(ph),tg.z+rd*Math.sin(ph)*Math.cos(th));cam.lookAt(tg)}
 var P={},pd=0,lx=0,ly=0;function pc(){return Object.keys(P).length}function pdist(){var k=Object.keys(P);var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y)}
 cv.addEventListener('pointerdown',function(e){P[e.pointerId]={x:e.clientX,y:e.clientY};lx=e.clientX;ly=e.clientY;if(pc()==2)pd=pdist();try{cv.setPointerCapture(e.pointerId)}catch(x){}});
@@ -69,7 +69,7 @@ cv.addEventListener('wheel',function(e){e.preventDefault();rd=Math.max(5,Math.mi
 function rs(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.fov=innerWidth<innerHeight?80:45;cam.updateProjectionMatrix()}
 addEventListener('resize',rs);rs();
 b1.onclick=function(){ph=1.0;th=.8;rd=17};b2.onclick=function(){ph=.05;rd=19};
-b3.onclick=function(){cut=!cut;walls.children.forEach(function(m){m.scale.y=cut?.3:1;m.position.y=cut?H*.15:H/2})};
+function applyCut(){walls.children.forEach(function(m){m.scale.y=cut?.5:1;m.position.y=cut?H*.25:H/2});b3.textContent=cut?'الجدران كاملة':'قص الجدران'}applyCut();b3.onclick=function(){cut=!cut;applyCut()};
 b4.onclick=function(){auto=!auto};
 var bad=false;(function loop(){requestAnimationFrame(loop);if(bad)return;try{if(auto)th+=.005;upd();R.render(sc,cam)}catch(err){bad=true;fail('خطأ في العرض: '+err.message)}})();
 </script></body></html>
