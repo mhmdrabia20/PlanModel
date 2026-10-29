@@ -19,7 +19,7 @@ h1{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:14px;margi
 <div class="bar"><button id="b1">منظور</button><button id="b2">من الأعلى</button><button id="b3">قص الجدران</button><button id="b4">تدوير تلقائي</button></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-var S=1/64,H=2.8,T=0.14,ox=235,oy=250;
+var S=1/64,H=2.8,T=0.14,ox=235,oy=250,WALLC=0xe4d8c6;
 var cv=document.getElementById('c');
 var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)||innerWidth<700;
 function fail(m){var d=document.createElement('div');d.style.cssText='position:fixed;top:35%;left:12px;right:12px;text-align:center;font-size:15px;line-height:1.7;z-index:9';d.textContent=m;document.body.appendChild(d)}
@@ -32,27 +32,34 @@ var cam=new THREE.PerspectiveCamera(45,1,.1,200);
 sc.add(new THREE.HemisphereLight(0xffffff,0x888899,.75));
 var sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(8,14,6);sun.castShadow=true;sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.mapSize.set(1024,1024);sc.add(sun);
 function X(p){return (p-ox)*S} function Z(p){return (p-oy)*S}
-function box(x1,y1,x2,y2,h,y0,col,grp){var w=Math.abs(x2-x1)*S,d=Math.abs(y2-y1)*S;var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(X((x1+x2)/2),y0+h/2,Z((y1+y2)/2));m.castShadow=m.receiveShadow=true;(grp||sc).add(m);return m}
+function box(x1,y1,x2,y2,h,y0,col,grp){var w=Math.abs(x2-x1)*S,d=Math.abs(y2-y1)*S;var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(X((x1+x2)/2),y0+h/2,Z((y1+y2)/2));m.castShadow=m.receiveShadow=true;m.userData={h:h,y0:y0};(grp||sc).add(m);return m}
 var G=new THREE.Group();sc.add(G);var walls=new THREE.Group();sc.add(walls);
 // floors
-var floors=[[235,310,460,560,0xc9a77c],[460,250,640,560,0xd8d4cc],[370,560,640,740,0xd8d4cc],[640,305,870,540,0xb89468],[640,540,885,770,0xcfd6da],[235,565,370,690,0xb89468],[235,690,370,740,0xdfe6ea],[235,740,465,860,0xdfe6ea],[370,690,465,740,0xdfe6ea],[235,250,460,310,0xc7ccd1],[640,250,870,305,0xc7ccd1],[870,250,945,540,0xc7ccd1],[885,540,945,770,0xc7ccd1]];
+var floors=[[235,310,460,560,0xd3a574],[460,250,640,560,0xe4ded0],[370,560,640,740,0xe4ded0],[640,305,885,540,0xd3a574],[640,540,885,770,0xb8c6cf],[235,565,370,690,0xe3c39a],[235,690,370,740,0x9fd2d8],[235,740,465,860,0x9fd2d8],[370,690,465,740,0x9fd2d8],[235,250,460,310,0xc9926b],[640,250,885,305,0xc9926b],[885,250,945,540,0xc9926b],[885,540,945,770,0xc9926b],[465,740,640,770,0xe4ded0]];
 floors.forEach(function(f){box(f[0],f[1],f[2],f[3],.05,-.05,f[4],G)});
 // walls: horizontal (y fixed) or vertical (x fixed) with gaps
 function wall(a,b,c,d,gaps){var hz=(b===d);var lo=hz?a:b,hi=hz?c:d;var cuts=[lo];(gaps||[]).forEach(function(g){cuts.push(g[0],g[1])});cuts.push(hi);
  for(var i=0;i<cuts.length;i+=2){var s=cuts[i],e=cuts[i+1];if(e-s<1)continue;
-  if(hz)box(s,b-T/S/2,e,b+T/S/2,H,0,0xf4f1ea,walls);else box(a-T/S/2,s,a+T/S/2,e,H,0,0xf4f1ea,walls);}}
-wall(235,310,460,310,[[395,445]]);wall(235,310,235,860);wall(235,560,460,560,[[280,340],[395,440]]);
-wall(460,250,460,560);wall(460,250,640,250);wall(640,250,640,540,[[490,535]]);
-wall(640,305,870,305);wall(870,305,870,540,[[475,510]]);wall(640,540,885,540);
-wall(885,540,885,770);wall(590,770,885,770);wall(590,740,590,770);wall(640,540,640,590);
-wall(465,740,525,740);wall(465,560,465,740,[[625,740]]);wall(370,560,370,690);
-wall(235,565,370,565,[[280,340]]);wall(235,690,370,690,[[300,350]]);wall(235,740,370,740);
-wall(370,740,465,740,[[395,425]]);wall(370,690,370,740);wall(465,690,465,860);wall(235,860,465,860);wall(370,740,370,690);
+  if(hz)box(s,b-T/S/2,e,b+T/S/2,H,0,WALLC,walls);else box(a-T/S/2,s,a+T/S/2,e,H,0,WALLC,walls);}}
+wall(235,310,460,310,[[395,445]]);wall(235,310,235,860,[[447,510],[700,725],[775,805]]);wall(235,560,460,560,[[280,340],[395,440]]);
+wall(460,250,460,560);wall(460,250,640,250,[[520,585]]);wall(640,250,640,540,[[490,535]]);
+wall(640,305,885,305,[[735,785]]);wall(885,305,885,540,[[475,510]]);wall(640,540,885,540);
+wall(885,540,885,770,[[613,662]]);wall(590,770,885,770);wall(640,540,640,590);
+wall(465,770,540,770);wall(465,560,465,740,[[625,740]]);wall(370,560,370,690);
+wall(235,565,370,565,[[280,340]]);wall(235,690,370,690,[[312,350]]);wall(235,740,370,740);
+wall(370,740,465,740,[[385,440]]);wall(370,690,370,740);wall(465,690,465,860);wall(235,860,465,860);wall(370,740,370,690);
 wall(370,560,465,560,[[395,440]]);
 function rail(a,b,c,d){if(b===d)box(a,b-1,c,b+1,1.0,0,0x9fb4c8,walls);else box(a-1,b,a+1,d,1.0,0,0x9fb4c8,walls)}
 rail(235,250,460,250);rail(235,250,235,310);rail(640,250,945,250);rail(945,250,945,540);rail(945,540,945,770);rail(885,770,945,770);
+function win(a,b,c,d,s){var hz=(b===d),h2=T/S/2,g;var f=function(x1,y1,x2,y2,h,y0,col,hi){var m=box(x1,y1,x2,y2,h,y0,col,walls);if(hi)m.userData.hi=true;return m};
+if(hz){f(a,b-h2,c,b+h2,s,0,WALLC);f(a,b-h2,c,b+h2,H-2.1,2.1,WALLC,1);g=f(a,b-1,c,b+1,2.1-s,s,0x9ad0ea)}
+else{f(a-h2,b,a+h2,d,s,0,WALLC);f(a-h2,b,a+h2,d,H-2.1,2.1,WALLC,1);g=f(a-1,b,a+1,d,2.1-s,s,0x9ad0ea)}
+g.material=new THREE.MeshLambertMaterial({color:0x9ad0ea,transparent:true,opacity:.45});g.castShadow=false}
+function door(hx,hy,len,cx,cz,dx,dz){var L=len*S,h2=T/S/2,ex=hx+len*cx,ey=hy+len*cz;var g=new THREE.BoxGeometry(L-.04,2.0,.05);g.translate(L/2,0,0);var m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:0xb98556}));var p=new THREE.Mesh(new THREE.BoxGeometry((L-.04)*.72,1.45,.056),new THREE.MeshLambertMaterial({color:0xcd9a69}));p.position.set(L/2,0,0);m.add(p);var k=new THREE.Mesh(new THREE.SphereGeometry(.04,10,8),new THREE.MeshLambertMaterial({color:0xd4af37}));k.position.set(L-.1,-.05,.06);m.add(k);m.position.set(X(hx),1.0,Z(hy));m.rotation.y=Math.atan2(-dz,dx);m.castShadow=true;m.userData={h:2.0,y0:0};walls.add(m);var f=function(x1,y1,x2,y2,h,y0,c){box(x1,y1,x2,y2,h,y0,c,walls)};if(cz===0){f(Math.min(hx,ex),hy-h2,Math.max(hx,ex),hy+h2,H-2.0,2.0,WALLC);f(hx-2,hy-h2-1,hx+2,hy+h2+1,2.0,0,0xf6f1e8);f(ex-2,hy-h2-1,ex+2,hy+h2+1,2.0,0,0xf6f1e8)}else{f(hx-h2,Math.min(hy,ey),hx+h2,Math.max(hy,ey),H-2.0,2.0,WALLC);f(hx-h2-1,hy-2,hx+h2+1,hy+2,2.0,0,0xf6f1e8);f(hx-h2-1,ey-2,hx+h2+1,ey+2,2.0,0,0xf6f1e8)}}
+win(520,250,585,250,.9);win(735,305,785,305,.9);win(235,447,235,510,.9);win(235,700,235,725,1.5);win(235,775,235,805,1.5);win(885,613,885,662,.9);
+door(445,310,50,-1,0,-.34,-.94);door(440,560,45,-1,0,-.34,-.94);door(640,490,45,0,1,-.94,.34);door(885,510,35,0,-1,.94,-.34);door(350,690,38,-1,0,-.34,.94);door(440,740,55,-1,0,-.34,.94);door(590,770,50,-1,0,-.17,-.98);
 // furniture
-var F=[[275,325,375,450,.5,0x8fa6c9],[280,320,370,340,.9,0xdedede],[420,365,455,495,2.0,0x8b6f4e],[750,325,860,395,.5,0x8fa6c9],[750,425,860,500,.5,0x8fa6c9],[645,330,675,460,2.0,0x8b6f4e],
+var F=[[275,325,375,450,.5,0x8fa6c9],[280,320,370,340,.9,0xdedede],[420,365,455,495,2.0,0x8b6f4e],[657,317,727,427,.5,0x8fa6c9],[757,317,832,427,.5,0x8fa6c9],[662,500,792,530,2.0,0x8b6f4e],
 [670,545,880,590,.9,0x6b7480],[690,715,880,770,.9,0x6b7480],[643,637,662,762,1.05,0x6b4a2f],[618,655,636,673,.6,0x4b5563],[618,705,636,723,.6,0x4b5563],[515,570,580,685,.9,0x7c5a3c],[515,330,545,470,.45,0x7c5a3c],
 [240,745,330,790,.4,0xffffff],[240,830,325,855,.9,0x6b7480],[245,700,265,725,.4,0xffffff],[240,572,262,685,2.0,0x8b6f4e],[330,572,366,600,.8,0xb0a58f]];
 F.forEach(function(f){box(f[0],f[1],f[2],f[3],f[4],0,f[5],G)});
@@ -69,7 +76,7 @@ cv.addEventListener('wheel',function(e){e.preventDefault();rd=Math.max(5,Math.mi
 function rs(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.fov=innerWidth<innerHeight?80:45;cam.updateProjectionMatrix()}
 addEventListener('resize',rs);rs();
 b1.onclick=function(){ph=1.0;th=.8;rd=17};b2.onclick=function(){ph=.05;rd=19};
-function applyCut(){walls.children.forEach(function(m){m.scale.y=cut?.5:1;m.position.y=cut?H*.25:H/2});b3.textContent=cut?'الجدران كاملة':'قص الجدران'}applyCut();b3.onclick=function(){cut=!cut;applyCut()};
+function applyCut(){walls.children.forEach(function(m){var u=m.userData;var s=cut?.5:1;m.scale.y=s;m.position.y=(u.y0+u.h/2)*s});b3.textContent=cut?'الجدران كاملة':'قص الجدران'}applyCut();b3.onclick=function(){cut=!cut;applyCut()};
 b4.onclick=function(){auto=!auto};
 var bad=false;(function loop(){requestAnimationFrame(loop);if(bad)return;try{if(auto)th+=.005;upd();R.render(sc,cam)}catch(err){bad=true;fail('خطأ في العرض: '+err.message)}})();
 </script></body></html>
