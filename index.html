@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نموذج ثلاثي الأبعاد للمخطط</title>
+<style>
+:root{--bg:#eef0f3;--fg:#1d2430;--bar:rgba(255,255,255,.9);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1f27;--fg:#e8ebf0;--bar:rgba(35,40,50,.92)}}
+:root[data-theme="dark"]{--bg:#1b1f27;--fg:#e8ebf0;--bar:rgba(35,40,50,.92)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;overflow:hidden}
+#c{position:fixed;top:0;left:0;width:100%;height:100%;touch-action:none;display:block}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;justify-content:center;gap:8px;width:calc(100% - 20px);max-width:520px;box-sizing:border-box;background:var(--bar);padding:8px;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+button{font:inherit;font-size:14px;min-height:44px;flex:1 1 44%;border:0;border-radius:12px;padding:8px 12px;background:#2f6fed;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+body{-webkit-user-select:none;user-select:none}
+.hint{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:14px;font-size:12px;opacity:.7;pointer-events:none}
+h1{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:14px;margin:0;font-size:16px;background:var(--bar);padding:6px 12px;border-radius:10px}
+</style></head><body>
+<canvas id="c"></canvas>
+<h1>المخطط — عرض ثلاثي الأبعاد</h1><div class="hint">اسحب بإصبع للتدوير · بإصبعين للتقريب</div>
+<div class="bar"><button id="b1">منظور</button><button id="b2">من الأعلى</button><button id="b3">قص الجدران</button><button id="b4">تدوير تلقائي</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+var S=1/64,H=2.8,T=0.14,ox=235,oy=250;
+var cv=document.getElementById('c');
+var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)||innerWidth<700;
+function fail(m){var d=document.createElement('div');d.style.cssText='position:fixed;top:35%;left:12px;right:12px;text-align:center;font-size:15px;line-height:1.7;z-index:9';d.textContent=m;document.body.appendChild(d)}
+if(typeof THREE==='undefined'){fail('تعذّر تحميل مكتبة العرض ثلاثي الأبعاد. تأكد من الاتصال بالإنترنت ثم أعد المحاولة.')}
+var R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:!mob,powerPreference:'high-performance'})}catch(err){fail('هذا المتصفح لا يشغّل WebGL: '+err.message)}
+R.setPixelRatio(Math.min(devicePixelRatio,mob?1.5:2));R.shadowMap.enabled=!mob;
+cv.addEventListener('webglcontextlost',function(e){e.preventDefault();fail('انقطع عرض الرسومات على الجهاز. أعد تحميل الصفحة.')});
+var sc=new THREE.Scene();sc.background=new THREE.Color(0xe9ecf1);
+var cam=new THREE.PerspectiveCamera(45,1,.1,200);
+sc.add(new THREE.HemisphereLight(0xffffff,0x888899,.75));
+var sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(8,14,6);sun.castShadow=true;sun.shadow.camera.left=-14;sun.shadow.camera.right=14;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.mapSize.set(1024,1024);sc.add(sun);
+function X(p){return (p-ox)*S} function Z(p){return (p-oy)*S}
+function box(x1,y1,x2,y2,h,y0,col,grp){var w=Math.abs(x2-x1)*S,d=Math.abs(y2-y1)*S;var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:col}));m.position.set(X((x1+x2)/2),y0+h/2,Z((y1+y2)/2));m.castShadow=m.receiveShadow=true;(grp||sc).add(m);return m}
+var G=new THREE.Group();sc.add(G);var walls=new THREE.Group();sc.add(walls);
+// floors
+var floors=[[235,310,460,560,0xc9a77c],[460,250,640,560,0xd8d4cc],[370,560,640,740,0xd8d4cc],[640,305,870,540,0xb89468],[640,540,885,770,0xcfd6da],[235,565,370,690,0xb89468],[235,690,370,740,0xdfe6ea],[235,740,465,860,0xdfe6ea],[370,690,465,740,0xdfe6ea],[235,250,460,310,0xc7ccd1],[640,250,870,305,0xc7ccd1],[870,250,945,540,0xc7ccd1],[885,540,945,770,0xc7ccd1]];
+floors.forEach(function(f){box(f[0],f[1],f[2],f[3],.05,-.05,f[4],G)});
+// walls: horizontal (y fixed) or vertical (x fixed) with gaps
+function wall(a,b,c,d,gaps){var hz=(b===d);var lo=hz?a:b,hi=hz?c:d;var cuts=[lo];(gaps||[]).forEach(function(g){cuts.push(g[0],g[1])});cuts.push(hi);
+ for(var i=0;i<cuts.length;i+=2){var s=cuts[i],e=cuts[i+1];if(e-s<1)continue;
+  if(hz)box(s,b-T/S/2,e,b+T/S/2,H,0,0xf4f1ea,walls);else box(a-T/S/2,s,a+T/S/2,e,H,0,0xf4f1ea,walls);}}
+wall(235,310,460,310,[[395,445]]);wall(235,310,235,860);wall(235,560,460,560,[[280,340],[395,440]]);
+wall(460,250,460,560);wall(460,250,640,250);wall(640,250,640,540,[[490,535]]);
+wall(640,305,870,305);wall(870,305,870,540,[[475,510]]);wall(640,540,885,540);
+wall(885,540,885,770);wall(590,770,885,770);wall(590,740,590,770);wall(640,540,640,590);
+wall(465,740,525,740);wall(465,560,465,740,[[625,740]]);wall(370,560,370,690);
+wall(235,565,370,565,[[280,340]]);wall(235,690,370,690,[[300,350]]);wall(235,740,370,740);
+wall(370,740,465,740,[[395,425]]);wall(370,690,370,740);wall(465,690,465,860);wall(235,860,465,860);wall(370,740,370,690);
+wall(370,560,465,560,[[395,440]]);
+function rail(a,b,c,d){if(b===d)box(a,b-1,c,b+1,1.0,0,0x9fb4c8,walls);else box(a-1,b,a+1,d,1.0,0,0x9fb4c8,walls)}
+rail(235,250,460,250);rail(235,250,235,310);rail(640,250,945,250);rail(945,250,945,540);rail(945,540,945,770);rail(885,770,945,770);
+// furniture
+var F=[[275,325,375,450,.5,0x8fa6c9],[280,320,370,340,.9,0xdedede],[420,365,455,495,2.0,0x8b6f4e],[750,325,860,395,.5,0x8fa6c9],[750,425,860,500,.5,0x8fa6c9],[645,330,675,460,2.0,0x8b6f4e],
+[670,545,880,590,.9,0x6b7480],[690,715,880,770,.9,0x6b7480],[643,637,662,762,1.05,0x6b4a2f],[618,655,636,673,.6,0x4b5563],[618,705,636,723,.6,0x4b5563],[515,570,580,685,.9,0x7c5a3c],[515,330,545,470,.45,0x7c5a3c],
+[240,745,330,790,.4,0xffffff],[240,830,325,855,.9,0x6b7480],[245,700,265,725,.4,0xffffff],[240,572,262,685,2.0,0x8b6f4e],[330,572,366,600,.8,0xb0a58f]];
+F.forEach(function(f){box(f[0],f[1],f[2],f[3],f[4],0,f[5],G)});
+// base plate
+var gnd=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0xdfe3e8}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-.1;gnd.receiveShadow=true;sc.add(gnd);
+// orbit
+var tg=new THREE.Vector3(X(590),0.5,Z(555)),th=.8,ph=1.0,rd=17,auto=false,cut=false;
+function upd(){cam.position.set(tg.x+rd*Math.sin(ph)*Math.sin(th),tg.y+rd*Math.cos(ph),tg.z+rd*Math.sin(ph)*Math.cos(th));cam.lookAt(tg)}
+var P={},pd=0,lx=0,ly=0;function pc(){return Object.keys(P).length}function pdist(){var k=Object.keys(P);var a=P[k[0]],b=P[k[1]];return Math.hypot(a.x-b.x,a.y-b.y)}
+cv.addEventListener('pointerdown',function(e){P[e.pointerId]={x:e.clientX,y:e.clientY};lx=e.clientX;ly=e.clientY;if(pc()==2)pd=pdist();try{cv.setPointerCapture(e.pointerId)}catch(x){}});
+function up(e){delete P[e.pointerId];var k=Object.keys(P);if(k.length==1){lx=P[k[0]].x;ly=P[k[0]].y}}cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('pointermove',function(e){if(!P[e.pointerId])return;P[e.pointerId]={x:e.clientX,y:e.clientY};if(pc()>=2){var d=pdist();if(pd>0)rd=Math.max(5,Math.min(40,rd*pd/d));pd=d;return}th-=(e.clientX-lx)*.006;ph=Math.max(.05,Math.min(1.5,ph-(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY});
+cv.addEventListener('wheel',function(e){e.preventDefault();rd=Math.max(5,Math.min(40,rd*(1+e.deltaY*.001)))},{passive:false});
+function rs(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.fov=innerWidth<innerHeight?80:45;cam.updateProjectionMatrix()}
+addEventListener('resize',rs);rs();
+b1.onclick=function(){ph=1.0;th=.8;rd=17};b2.onclick=function(){ph=.05;rd=19};
+b3.onclick=function(){cut=!cut;walls.children.forEach(function(m){m.scale.y=cut?.3:1;m.position.y=cut?H*.15:H/2})};
+b4.onclick=function(){auto=!auto};
+var bad=false;(function loop(){requestAnimationFrame(loop);if(bad)return;try{if(auto)th+=.005;upd();R.render(sc,cam)}catch(err){bad=true;fail('خطأ في العرض: '+err.message)}})();
+</script></body></html>
